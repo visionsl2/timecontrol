@@ -72,22 +72,17 @@ void WebServer::setupRoutes() {
         uint32_t timeout = 0;
 
         if (parseConfigPost(body, ssid, pass, timeout, notifyUrl)) {
-            bool success = true;
             if (!ssid.isEmpty()) {
-                success &= _config->setWiFiCredentials(ssid, pass);
+                _config->setWiFiSsid(ssid);
+                _config->setWiFiPassword(pass);
             }
             if (timeout > 0) {
-                success &= _config->setTimeout(timeout);
+                _config->setTimeoutMs(timeout);
             }
             if (!notifyUrl.isEmpty()) {
-                success &= _config->setNotificationUrl(notifyUrl);
+                _config->setNotifyUrl(notifyUrl);
             }
-
-            if (success) {
-                request->send(200, "application/json", "{\"status\":\"ok\"}");
-            } else {
-                request->send(500, "application/json", "{\"error\":\"save failed\"}");
-            }
+            request->send(200, "application/json", "{\"status\":\"ok\"}");
         } else {
             request->send(400, "application/json", "{\"error\":\"invalid request\"}");
         }
@@ -136,13 +131,9 @@ void WebServer::setupRoutes() {
 }
 
 String WebServer::getConfigJson(ConfigManager* config) {
-    String ssid;
-    uint32_t timeoutMs = 0;
-    String notifyUrl;
-
-    config->getWiFiSsid(ssid);
-    config->getTimeout(timeoutMs);
-    config->getNotificationUrl(notifyUrl);
+    String ssid = config->getWiFiSsid();
+    uint32_t timeoutMs = config->getTimeoutMs();
+    String notifyUrl = config->getNotifyUrl();
 
     // Convert timeout from ms to minutes
     uint32_t timeoutMin = timeoutMs / 60000;

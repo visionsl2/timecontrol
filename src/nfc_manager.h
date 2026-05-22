@@ -10,7 +10,7 @@ class ConfigManager;
 
 class NfcManager {
 public:
-    NfcManager();
+    NfcManager(int irqPin, int rstPin);
 
     bool begin();
     String detectTag();
@@ -22,6 +22,8 @@ public:
     String getWhitelistTag(int index);
 
 private:
+    int _irqPin;
+    int _rstPin;
     Adafruit_PN532 _pn532;
     ConfigManager* _config;
     std::vector<String> _whitelistCache;

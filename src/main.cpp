@@ -24,6 +24,9 @@ StateMachine stateMachine;
 // Flag to track if we are in config mode
 static bool inConfigMode = false;
 
+// Forward declaration
+void enterConfigMode();
+
 void setup() {
     Serial.begin(115200);
     delay(100);
@@ -47,11 +50,14 @@ void setup() {
     // Initialize State Machine with all dependencies
     stateMachine.begin(&nfcManager, &ledController, &buzzerController, &timerManager);
 
+    // Initialize WiFi manager
+    wifiManager.begin(&configManager);
+
     // Check if WiFi is configured
-    String ssid;
-    if (configManager.getWiFiSsid(ssid) && ssid.length() > 0) {
+    String ssid = configManager.getWiFiSsid();
+    if (ssid.length() > 0) {
         // WiFi is configured, try to connect
-        wifiManager.begin(&configManager);
+        Serial.println("WiFi configured, connecting to: " + ssid);
 
         // Wait for WiFi connection (with timeout)
         unsigned long startAttempt = millis();

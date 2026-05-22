@@ -1,6 +1,7 @@
 #include "wifi_manager.h"
 #include "config.h"
 #include "config_manager.h"
+#include <HTTPClient.h>
 
 WiFiManager::WiFiManager() : _config(nullptr), _configMode(false) {}
 
@@ -30,21 +31,19 @@ void WiFiManager::stopConfigMode() {
     }
 
     _configMode = false;
-    WiFi.softAPstop();
+    WiFi.softAPdisconnect(true);
     WiFi.disconnect(true);
     WiFi.mode(WIFI_STA);
 
     // Try to connect to target WiFi
     if (_config != nullptr) {
-        String ssid;
-        String password;
-        if (_config->getWiFiSsid(ssid) && _config->getWiFiPassword(password)) {
-            if (!ssid.isEmpty()) {
-                if (password.isEmpty()) {
-                    WiFi.begin(ssid.c_str());
-                } else {
-                    WiFi.begin(ssid.c_str(), password.c_str());
-                }
+        String ssid = _config->getWiFiSsid();
+        String password = _config->getWiFiPassword();
+        if (ssid.length() > 0) {
+            if (password.length() == 0) {
+                WiFi.begin(ssid.c_str());
+            } else {
+                WiFi.begin(ssid.c_str(), password.c_str());
             }
         }
     }

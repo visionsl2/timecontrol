@@ -14,10 +14,7 @@ void TimerManager::begin() {
 void TimerManager::setConfig(ConfigManager* config) {
     _config = config;
     if (config != nullptr) {
-        uint32_t timeout;
-        if (config->getTimeout(timeout)) {
-            _timeoutMs = timeout;
-        }
+        _timeoutMs = config->getTimeoutMs();
     }
 }
 

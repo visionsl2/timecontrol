@@ -3,43 +3,39 @@
 
 #include <Arduino.h>
 #include <Preferences.h>
-#include <vector>
-#include <String>
 
 class ConfigManager {
 public:
     ConfigManager();
 
-    bool begin();
+    void begin();
     void end();
 
     // WiFi配置
-    bool setWiFiCredentials(const String& ssid, const String& password);
-    bool getWiFiSsid(String& outSsid) const;
-    bool getWiFiPassword(String& outPassword) const;
-    bool isWiFiConfigured() const;
+    String getWiFiSsid();
+    void setWiFiSsid(const String& ssid);
+    String getWiFiPassword();
+    void setWiFiPassword(const String& password);
+    bool isWiFiConfigured();
 
     // 超时配置
-    bool setTimeout(uint32_t timeoutMs);
-    bool getTimeout(uint32_t& outTimeoutMs) const;
+    uint32_t getTimeoutMs();
+    void setTimeoutMs(uint32_t ms);
 
     // 通知URL配置
-    bool setNotificationUrl(const String& url);
-    bool getNotificationUrl(String& outUrl) const;
+    String getNotifyUrl();
+    void setNotifyUrl(const String& url);
 
     // NFC标签管理
-    bool addRegisteredTag(const String& tagUid);
-    bool removeRegisteredTag(const String& tagUid);
-    bool isTagRegistered(const String& tagUid) const;
-    bool getRegisteredTags(std::vector<String>& outTags) const;
-    uint8_t getRegisteredTagCount() const;
-    bool clearAllTags();
+    uint8_t getRegisteredTagCount();
+    String getRegisteredTag(uint8_t index);
+    void addRegisteredTag(const String& uid);
+    void removeRegisteredTag(uint8_t index);
+    bool isTagRegistered(const String& uid);
+    void clearAllTags();
 
 private:
     Preferences _prefs;
-
-    String _getTagKey(uint8_t index) const;
-    String _getTagKeyByUid(const String& uid) const;
 };
 
 #endif

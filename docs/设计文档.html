@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时间管控器 - 设计文档 V1.0</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e8e8e8;
+            line-height: 1.8;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* 头部渐变 */
+        .header {
+            background: linear-gradient(135deg, #e94560 0%, #ff6b6b 50%, #ffa502 100%);
+            padding: 50px 40px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 60px rgba(233, 69, 96, 0.4);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.3; }
+        }
+
+        .header h1 {
+            font-size: 3em;
+            color: #fff;
+            text-shadow: 2px 4px 8px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header .version {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 25px;
+            border-radius: 30px;
+            font-size: 1.1em;
+            color: #fff;
+            backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 1;
+        }
+
+        .header .date {
+            color: rgba(255,255,255,0.8);
+            margin-top: 15px;
+            font-size: 0.95em;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 卡片 */
+        .card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #e94560;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(233, 69, 96, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h2::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #e94560;
+            border-radius: 50%;
+        }
+
+        .card h3 {
+            color: #ff6b6b;
+            font-size: 1.2em;
+            margin: 20px 0 12px;
+        }
+
+        .card p {
+            color: #b8b8b8;
+            margin-bottom: 10px;
+        }
+
+        /* 表格 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th {
+            background: linear-gradient(135deg, #e94560, #ff6b6b);
+            color: #fff;
+            padding: 14px 18px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: #ccc;
+        }
+
+        tr:hover td {
+            background: rgba(233, 69, 96, 0.1);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* 列表 */
+        ul, ol {
+            margin: 15px 0 15px 25px;
+            color: #b8b8b8;
+        }
+
+        li {
+            margin: 8px 0;
+            padding-left: 5px;
+        }
+
+        li::marker {
+            color: #e94560;
+        }
+
+        /* 代码块 */
+        pre {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9em;
+            color: #c9d1d9;
+            line-height: 1.6;
+        }
+
+        code {
+            background: rgba(233, 69, 96, 0.2);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            color: #ff6b6b;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+
+        /* 流程图 */
+        .flowchart {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .flowchart .box {
+            display: inline-block;
+            background: linear-gradient(135deg, #e94560, #ff6b6b);
+            color: #fff;
+            padding: 15px 30px;
+            border-radius: 10px;
+            margin: 8px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .flowchart .box.green {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            box-shadow: 0 4px 15px rgba(0, 184, 148, 0.3);
+        }
+
+        .flowchart .box.orange {
+            background: linear-gradient(135deg, #fdcb6e, #f39c12);
+            box-shadow: 0 4px 15px rgba(253, 203, 110, 0.3);
+        }
+
+        .flowchart .arrow {
+            display: block;
+            color: #666;
+            font-size: 1.5em;
+            margin: 5px 0;
+        }
+
+        /* 状态标签 */
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .tag-p0 { background: #e94560; color: #fff; }
+        .tag-p1 { background: #f39c12; color: #fff; }
+        .tag-p2 { background: #636e72; color: #fff; }
+        .tag-ok { background: #00b894; color: #fff; }
+        .tag-warn { background: #fdcb6e; color: #333; }
+
+        /* 接线图 */
+        .wiring {
+            background: #0d1117;
+            border-radius: 12px;
+            padding: 25px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85em;
+            line-height: 2;
+            overflow-x: auto;
+        }
+
+        .wiring .comment {
+            color: #6a737d;
+        }
+
+        .wiring .pin {
+            color: #79c0ff;
+        }
+
+        .wiring .arrow {
+            color: #f97583;
+        }
+
+        /* 项目结构 */
+        .folder-tree {
+            background: #0d1117;
+            border-radius: 12px;
+            padding: 20px 25px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+
+        .folder-tree .folder {
+            color: #ffd700;
+        }
+
+        .folder-tree .file {
+            color: #85e89d;
+        }
+
+        .folder-tree .indent {
+            margin-left: 20px;
+        }
+
+        /* 进度列表 */
+        .progress-list {
+            list-style: none;
+            margin: 0;
+        }
+
+        .progress-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .progress-list li::before {
+            content: '○';
+            color: #e94560;
+            font-size: 1.2em;
+        }
+
+        .progress-list li.done::before {
+            content: '●';
+            color: #00b894;
+        }
+
+        .progress-list li.in-progress::before {
+            content: '◐';
+            color: #fdcb6e;
+        }
+
+        /* 底部 */
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            color: #666;
+            font-size: 0.9em;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2em; }
+            .card { padding: 20px; }
+            table { font-size: 0.9em; }
+            pre { font-size: 0.8em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>时间管控器</h1>
+            <div class="version">设计文档 V1.0</div>
+            <div class="date">创建日期: 2026-05-22</div>
+        </div>
+
+        <!-- 项目概述 -->
+        <div class="card">
+            <h2>项目概述</h2>
+            <p>一个基于ESP32的时间管控设备，用于控制家庭中儿童使用Switch游戏机的时间。通过NFC检测判断游戏机是否在盒内，超出设定时间未检测到时触发声光报警。</p>
+
+            <table>
+                <tr>
+                    <th>项目</th>
+                    <th>描述</th>
+                </tr>
+                <tr>
+                    <td>项目名称</td>
+                    <td>Switch Time Controller</td>
+                </tr>
+                <tr>
+                    <td>硬件平台</td>
+                    <td>ESP32 + PN532 NFC模块</td>
+                </tr>
+                <tr>
+                    <td>开发语言</td>
+                    <td>Arduino C (PlatformIO)</td>
+                </tr>
+                <tr>
+                    <td>核心功能</td>
+                    <td>NFC检测 + 超时报警 + WiFi配置</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 需求分析 -->
+        <div class="card">
+            <h2>需求分析</h2>
+
+            <h3>核心需求</h3>
+            <table>
+                <tr>
+                    <th>需求项</th>
+                    <th>描述</th>
+                    <th>优先级</th>
+                </tr>
+                <tr>
+                    <td>NFC检测</td>
+                    <td>检测Switch游戏机是否在盒内</td>
+                    <td><span class="tag tag-p0">P0</span></td>
+                </tr>
+                <tr>
+                    <td>超时提醒</td>
+                    <td>超出设定时间未检测到NFC时报警</td>
+                    <td><span class="tag tag-p0">P0</span></td>
+                </tr>
+                <tr>
+                    <td>视觉提示</td>
+                    <td>红色LED闪烁(警告) / 绿色LED(正常)</td>
+                    <td><span class="tag tag-p0">P0</span></td>
+                </tr>
+                <tr>
+                    <td>声音提醒</td>
+                    <td>蜂鸣器警报超时</td>
+                    <td><span class="tag tag-p0">P0</span></td>
+                </tr>
+                <tr>
+                    <td>自动恢复</td>
+                    <td>重新检测到NFC后恢复正常</td>
+                    <td><span class="tag tag-p0">P0</span></td>
+                </tr>
+                <tr>
+                    <td>WiFi配置</td>
+                    <td>通过Web界面配置超时时长</td>
+                    <td><span class="tag tag-p1">P1</span></td>
+                </tr>
+                <tr>
+                    <td>远程通知</td>
+                    <td>超时时发送HTTP通知</td>
+                    <td><span class="tag tag-p1">P1</span></td>
+                </tr>
+                <tr>
+                    <td>NFC标签注册</td>
+                    <td>记忆专属NFC标签UID，防止误判</td>
+                    <td><span class="tag tag-p0">P0</span></td>
+                </tr>
+                <tr>
+                    <td>配网按钮</td>
+                    <td>长按3秒触发配网流程</td>
+                    <td><span class="tag tag-p0">P0</span></td>
+                </tr>
+            </table>
+
+            <h3>使用场景</h3>
+            <div class="flowchart">
+                <div class="box green">检测到已注册NFC标签</div>
+                <span class="arrow">↓</span>
+                <div class="box">ACTIVE: 绿灯常亮，计时器重置</div>
+                <span class="arrow">↓</span>
+                <div class="box orange">检测不到NFC标签</div>
+                <span class="arrow">↓</span>
+                <div class="box">COUNTING: 绿灯闪烁（1秒间隔），开始计时</div>
+                <span class="arrow">↓</span>
+                <div class="box">超过设定时间?</div>
+                <span class="arrow">↓</span>
+                <div class="box">WARNING: 红灯闪烁 + 蜂鸣器响</div>
+                <span class="arrow">↺ 检测到已注册NFC标签</span>
+                <div class="box green">返回IDLE，重置计时器</div>
+            </div>
+
+            <h3>配网流程</h3>
+            <div class="flowchart">
+                <div class="box orange">长按配网按钮3秒</div>
+                <span class="arrow">↓</span>
+                <div class="box">CONFIG: 红绿交替闪烁</div>
+                <span class="arrow">↓</span>
+                <div class="box">开启AP热点 + WebServer</div>
+                <span class="arrow">↓</span>
+                <div class="box">用户连接配置</div>
+                <span class="arrow">↓</span>
+                <div class="box green">保存配置</div>
+                <span class="arrow">↓</span>
+                <div class="box">返回IDLE，连接目标WiFi</div>
+            </div>
+
+            <h3>⚠️ 重要：NFC标签注册机制</h3>
+            <div style="background:rgba(233,69,96,0.15); border:1px solid #e94560; border-radius:12px; padding:20px; margin:15px 0;">
+                <p style="color:#ff6b6b; font-weight:600; margin-bottom:10px;">为什么需要注册？</p>
+                <p>如果随便一个NFC标签放在盒子里就识别为"Switch在盒内"，那么计时永远不超时。</p>
+                <p style="margin-top:10px;">必须先<strong>将Switch上的NFC标签UID添加到白名单</strong>，只有白名单内的UID才会被识别。</p>
+                <p style="margin-top:10px;">注册方式：通过WiFi连接设备Web管理页面进行"学习"注册</p>
+            </div>
+        </div>
+
+        <!-- 硬件设计 -->
+        <div class="card">
+            <h2>硬件选型与设计</h2>
+
+            <h3>BOM清单</h3>
+            <table>
+                <tr>
+                    <th>组件</th>
+                    <th>型号</th>
+                    <th>数量</th>
+                    <th>备注</th>
+                </tr>
+                <tr>
+                    <td>主控板</td>
+                    <td>ESP32 DEVKIT V1</td>
+                    <td>1</td>
+                    <td>含WiFi功能</td>
+                </tr>
+                <tr>
+                    <td>NFC模块</td>
+                    <td>PN532</td>
+                    <td>1</td>
+                    <td>I2C接口</td>
+                </tr>
+                <tr>
+                    <td>NFC标签</td>
+                    <td>NTAG215</td>
+                    <td>1</td>
+                    <td>贴在Switch背面</td>
+                </tr>
+                <tr>
+                    <td>双色LED</td>
+                    <td>共阳极红绿</td>
+                    <td>1</td>
+                    <td>串联220Ω电阻</td>
+                </tr>
+                <tr>
+                    <td>有源蜂鸣器</td>
+                    <td>5V 有源</td>
+                    <td>1</td>
+                    <td>通电即响</td>
+                </tr>
+                <tr>
+                    <td>电阻</td>
+                    <td>220Ω</td>
+                    <td>2</td>
+                    <td>LED限流</td>
+                </tr>
+                <tr>
+                    <td>微动按钮</td>
+                    <td>6x6x5mm</td>
+                    <td>1</td>
+                    <td>配网按钮</td>
+                </tr>
+            </table>
+
+            <h3>接线方案</h3>
+            <div class="wiring">
+<span class="comment">// ESP32 → PN532 (I2C)</span>
+<span class="comment">───────────────────────────────</span>
+<span class="pin">3.3V</span>       <span class="arrow">→</span> VCC
+<span class="pin">GND</span>        <span class="arrow">→</span> GND
+<span class="pin">GPIO21</span>     <span class="arrow">→</span> SDA
+<span class="pin">GPIO22</span>     <span class="arrow">→</span> SCL
+<span class="pin">GPIO4</span>      <span class="arrow">→</span> IRQ
+<span class="pin">GPIO5</span>      <span class="arrow">→</span> RST
+
+<span class="comment">// ESP32 → 指示器件</span>
+<span class="comment">───────────────────────────────</span>
+<span class="pin">GPIO12</span>     <span class="arrow">→</span> LED_R (串联220Ω电阻)
+<span class="pin">GPIO13</span>     <span class="arrow">→</span> LED_G (串联220Ω电阻)
+<span class="pin">GPIO14</span>     <span class="arrow">→</span> 有源蜂鸣器 (Signal)
+<span class="pin">GND</span>        <span class="arrow">→</span> 蜂鸣器 GND
+
+<span class="comment">// ESP32 → 按钮</span>
+<span class="comment">───────────────────────────────</span>
+<span class="pin">GPIO0</span>      <span class="arrow">→</span> 微动按钮 (另一端接地)
+            </div>
+        </div>
+
+        <!-- 软件架构 -->
+        <div class="card">
+            <h2>软件架构设计</h2>
+
+            <h3>状态机设计</h3>
+            <div class="flowchart">
+                <div class="box">IDLE<br><small>等待NFC/红绿交替闪烁</small></div>
+                <span class="arrow">检测到已注册NFC</span>
+                <div class="box green">ACTIVE<br><small>绿灯常亮</small></div>
+                <span class="arrow">检测不到NFC</span>
+                <div class="box orange">COUNTING<br><small>绿灯闪烁（1秒间隔），开始计时</small></div>
+                <span class="arrow">超时</span>
+                <div class="box">WARNING<br><small>红灯闪烁+蜂鸣器</small></div>
+                <span class="arrow">重新检测到NFC</span>
+                <div class="box">IDLE<br><small>重置</small></div>
+            </div>
+
+            <h3>配网按钮状态</h3>
+            <div class="flowchart">
+                <div class="box">任意状态</div>
+                <span class="arrow">长按按钮3秒</span>
+                <div class="box">CONFIG<br><small>红绿交替闪烁，进入AP配网</small></div>
+                <span class="arrow">配置完成</span>
+                <div class="box">返回原状态</div>
+            </div>
+
+            <h3>模块划分</h3>
+            <table>
+                <tr>
+                    <th>模块</th>
+                    <th>功能</th>
+                    <th>文件</th>
+                </tr>
+                <tr>
+                    <td>NfcManager</td>
+                    <td>NFC读写、标签检测、UID白名单验证</td>
+                    <td><code>nfc_manager.h/cpp</code></td>
+                </tr>
+                <tr>
+                    <td>LedController</td>
+                    <td>双色LED控制、闪烁模式</td>
+                    <td><code>led_controller.h/cpp</code></td>
+                </tr>
+                <tr>
+                    <td>BuzzerController</td>
+                    <td>蜂鸣器报警控制</td>
+                    <td><code>buzzer_controller.h/cpp</code></td>
+                </tr>
+                <tr>
+                    <td>TimerManager</td>
+                    <td>超时计时、状态管理</td>
+                    <td><code>timer_manager.h/cpp</code></td>
+                </tr>
+                <tr>
+                    <td>ButtonManager</td>
+                    <td>配网按钮检测（长按3秒触发）</td>
+                    <td><code>button_manager.h/cpp</code></td>
+                </tr>
+                <tr>
+                    <td>WiFiManager</td>
+                    <td>WiFi连接、配网</td>
+                    <td><code>wifi_manager.h/cpp</code></td>
+                </tr>
+                <tr>
+                    <td>WebServer</td>
+                    <td>配置页面、状态显示</td>
+                    <td><code>web_server.h/cpp</code></td>
+                </tr>
+                <tr>
+                    <td>ConfigManager</td>
+                    <td>配置存储(Preferences/NVS)</td>
+                    <td><code>config_manager.h/cpp</code></td>
+                </tr>
+            </table>
+
+            <h3>核心流程（改进版）</h3>
+            <pre><code>void loop() {
+    // 1. 检查配网按钮（长按3秒）
+    if (buttonManager.isLongPressed(3000)) {
+        enterConfigMode();  // 进入配网
+    }
+
+    // 2. 检查NFC标签
+    String detectedUID = nfcManager.detectTag();
+    bool isRegistered = nfcManager.isTagRegistered(detectedUID);
+
+    switch (currentState) {
+        case IDLE:
+            if (isRegistered) {
+                currentState = ACTIVE;
+                timerManager.reset();
+                ledController.setGreen();
+                buzzerController.stop();
+            }
+            break;
+
+        case ACTIVE:
+            if (!isRegistered) {
+                currentState = COUNTING;
+                timerManager.startCounting();
+                ledController.setGreenBlink();
+            }
+            break;
+
+        case COUNTING:
+            if (isRegistered) {
+                currentState = ACTIVE;
+                timerManager.reset();
+                ledController.setGreen();
+                buzzerController.stop();
+            } else if (timerManager.isTimeout()) {
+                currentState = WARNING;
+                ledController.setRedBlink();
+                buzzerController.startAlarm();
+                notifyServer.sendTimeoutAlert();
+            }
+            break;
+
+        case WARNING:
+            if (isRegistered) {
+                currentState = IDLE;
+                timerManager.reset();
+                ledController.setBlueBlink();  // 或其他恢复提示
+                buzzerController.stop();
+            }
+            break;
+    }
+
+    // 3. 处理Web请求
+    webServer.handleClient();
+
+    delay(50);
+}</code></pre>
+        </div>
+
+        <!-- WiFi功能设计 -->
+        <div class="card">
+            <h2>WiFi配置功能设计</h2>
+
+            <h3>配网流程</h3>
+            <div class="flowchart">
+                <div class="box">上电启动</div>
+                <span class="arrow">↓</span>
+                <div class="box">检查NVS是否有WiFi配置</div>
+                <span class="arrow">↓</span>
+                <div class="box orange">有配置?</div>
+                <span class="arrow">是 / 否</span>
+                <div class="box">连接目标WiFi</div>
+                <span class="arrow">↺</span>
+                <div class="box green">连接成功</div>
+                <span class="arrow">否</span>
+                <div class="box">进入AP模式</div>
+                <span class="arrow">↓</span>
+                <div class="box">打开配置页面</div>
+                <span class="arrow">↓</span>
+                <div class="box">用户保存配置</div>
+                <span class="arrow">↓</span>
+                <div class="box green">重启连接</div>
+            </div>
+
+            <h3>Web配置界面</h3>
+            <div style="background:#0d1117; padding:25px; border-radius:12px; margin:15px 0;">
+                <h4 style="color:#e94560; margin-bottom:15px;">时间管控器 - 配置页面</h4>
+                <table style="background:transparent;">
+                    <tr>
+                        <td style="border:none; padding:8px 0; color:#888; width:100px;">超时时长</td>
+                        <td style="border:none; padding:8px 0;">
+                            <input type="number" value="30" style="background:#161b22; border:1px solid #30363d; color:#fff; padding:8px 15px; border-radius:6px; width:100px;"> 分钟
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="border:none; padding:8px 0; color:#888;">WiFi SSID</td>
+                        <td style="border:none; padding:8px 0;">
+                            <select style="background:#161b22; border:1px solid #30363d; color:#fff; padding:8px 15px; border-radius:6px; width:250px;">
+                                <option>Home_WiFi</option>
+                                <option>Office_5G</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="border:none; padding:8px 0; color:#888;">WiFi密码</td>
+                        <td style="border:none; padding:8px 0;">
+                            <input type="password" placeholder="请输入密码" style="background:#161b22; border:1px solid #30363d; color:#fff; padding:8px 15px; border-radius:6px; width:250px;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="border:none; padding:8px 0; color:#888;">通知URL</td>
+                        <td style="border:none; padding:8px 0;">
+                            <input type="text" placeholder="http://..." style="background:#161b22; border:1px solid #30363d; color:#fff; padding:8px 15px; border-radius:6px; width:250px;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="border:none; padding:15px 0 0;" colspan="2">
+                            <button style="background:linear-gradient(135deg,#e94560,#ff6b6b); color:#fff; border:none; padding:12px 30px; border-radius:8px; cursor:pointer; font-weight:600; margin-right:10px;">保存配置</button>
+                            <button style="background:#333; color:#fff; border:none; padding:12px 30px; border-radius:8px; cursor:pointer;">重启设备</button>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3>远程通知</h3>
+            <p>超时时发送HTTP GET请求到配置的服务器：</p>
+            <pre><code>GET /notify?type=timeout&device=switch-control-01 HTTP/1.1
+Host: your-server.com</code></pre>
+            <p>可对接：钉钉机器人、企业微信机器人、自建服务器等。</p>
+
+            <h3>NFC标签管理页面</h3>
+            <div style="background:#0d1117; padding:25px; border-radius:12px; margin:15px 0;">
+                <h4 style="color:#e94560; margin-bottom:15px;">NFC标签管理</h4>
+                <table style="background:transparent;">
+                    <tr>
+                        <td style="border:none; padding:10px 0; color:#888; vertical-align:top;">已注册标签</td>
+                        <td style="border:none; padding:10px 0;">
+                            <div style="background:#161b22; border:1px solid #30363d; border-radius:8px; padding:15px; min-height:80px;">
+                                <div style="color:#85e89d; margin-bottom:8px; font-family:monospace;">04:A2:B3:C4:D5:E6:F7 <span style="color:#f97583; cursor:pointer;">[删除]</span></div>
+                                <div style="color:#85e89d; font-family:monospace;">04:11:22:33:44:55:66 <span style="color:#f97583; cursor:pointer;">[删除]</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="border:none; padding:10px 0; color:#888;">当前检测到</td>
+                        <td style="border:none; padding:10px 0;">
+                            <input type="text" value="04:AA:BB:CC:DD:EE:FF" readonly style="background:#1a3a2a; border:1px solid #00b894; color:#00b894; padding:10px 15px; border-radius:6px; width:250px; font-family:monospace;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="border:none; padding:15px 0 0;" colspan="2">
+                            <button style="background:linear-gradient(135deg,#00b894,#00cec9); color:#fff; border:none; padding:12px 25px; border-radius:8px; cursor:pointer; font-weight:600; margin-right:10px;">+ 添加当前标签到白名单</button>
+                            <button style="background:#333; color:#fff; border:none; padding:12px 25px; border-radius:8px; cursor:pointer;">重新扫描</button>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3>NFC标签注册流程</h3>
+            <div class="flowchart">
+                <div class="box green">手机连接设备WiFi热点</div>
+                <span class="arrow">↓</span>
+                <div class="box">打开 http://192.168.4.1/nfc</div>
+                <span class="arrow">↓</span>
+                <div class="box">将Switch贴上NFC模块</div>
+                <span class="arrow">↓</span>
+                <div class="box">页面显示"当前检测到"标签UID</div>
+                <span class="arrow">↓</span>
+                <div class="box green">点击"添加到白名单"</div>
+                <span class="arrow">↓</span>
+                <div class="box">UID保存到NVS</div>
+            </div>
+
+            <h3>UID白名单验证逻辑</h3>
+            <pre><code>// NfcManager 伪代码
+class NfcManager {
+    String getCurrentTagUID();          // 读取当前NFC标签UID
+    bool isTagRegistered(String uid);   // 检查UID是否在白名单中
+    void registerTag(String uid);       // 添加UID到白名单
+    void unregisterTag(String uid);     // 从白名单删除UID
+
+    // 主检测函数
+    bool detectAndValidate() {
+        String uid = getCurrentTagUID();
+        if (uid.isEmpty()) return false;
+        return isTagRegistered(uid);   // 必须白名单验证通过
+    }
+};</code></pre>
+        </div>
+
+        <!-- 项目结构 -->
+        <div class="card">
+            <h2>项目结构</h2>
+            <div class="folder-tree">
+<span class="folder">timecontrol/</span>
+├── <span class="folder">src/</span>
+│   ├── <span class="file">main.cpp</span>
+│   ├── <span class="file">config.h</span>
+│   ├── <span class="file">nfc_manager.h/cpp</span>
+│   ├── <span class="file">led_controller.h/cpp</span>
+│   ├── <span class="file">buzzer_controller.h/cpp</span>
+│   ├── <span class="file">timer_manager.h/cpp</span>
+│   ├── <span class="file">button_manager.h/cpp</span>
+│   ├── <span class="file">wifi_manager.h/cpp</span>
+│   ├── <span class="file">web_server.h/cpp</span>
+│   └── <span class="file">config_manager.h/cpp</span>
+├── <span class="folder">data/</span>
+│   └── <span class="file">index.html</span>
+├── <span class="file">platformio.ini</span>
+└── <span class="file">README.md</span>
+            </div>
+        </div>
+
+        <!-- 开发计划 -->
+        <div class="card">
+            <h2>开发计划</h2>
+
+            <h3>阶段1：基础功能</h3>
+            <ul class="progress-list">
+                <li>硬件接线验证</li>
+                <li>PN532 NFC模块驱动</li>
+                <li>LED控制</li>
+                <li>蜂鸣器控制</li>
+                <li>配网按钮驱动（长按3秒检测）</li>
+                <li>状态机实现（IDLE/ACTIVE/COUNTING/WARNING/CONFIG）</li>
+                <li>计时逻辑（ACTIVE→COUNTING→WARNING）</li>
+                <li>NFC标签UID白名单注册/验证</li>
+            </ul>
+
+            <h3>阶段2：WiFi功能</h3>
+            <ul class="progress-list">
+                <li>WiFiManager配网（首次上电/按钮触发）</li>
+                <li>WebServer配置界面</li>
+                <li>NFC标签管理Web页面</li>
+                <li>配置存储(Preferences/NVS)</li>
+                <li>远程通知HTTP请求</li>
+            </ul>
+
+            <h3>阶段3：优化完善</h3>
+            <ul class="progress-list">
+                <li>LED闪烁节奏优化</li>
+                <li>蜂鸣器报警模式</li>
+                <li>外壳设计（可选）</li>
+            </ul>
+        </div>
+
+        <!-- 版本更新记录 -->
+        <div class="card">
+            <h2>版本更新记录</h2>
+            <table>
+                <tr>
+                    <th>版本</th>
+                    <th>日期</th>
+                    <th>更新内容</th>
+                </tr>
+                <tr>
+                    <td>V1.0</td>
+                    <td>2026-05-22</td>
+                    <td>初始设计文档，定义硬件选型、软件架构、WiFi功能方案</td>
+                </tr>
+                <tr>
+                    <td>V1.1</td>
+                    <td>2026-05-22</td>
+                    <td>新增：配网按钮（NFC标签白名单、计时逻辑细化）</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 底部 -->
+        <div class="footer">
+            时间管控器设计文档 · 2026-05-22
+        </div>
+    </div>
+</body>
+</html>

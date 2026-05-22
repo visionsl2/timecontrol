@@ -2,8 +2,9 @@
 #include "config.h"
 #include "config_manager.h"
 
-NfcManager::NfcManager()
-    : _pn532(PIN_NFC_IRQ, PIN_NFC_RST),
+NfcManager::NfcManager(int irqPin, int rstPin)
+    : _irqPin(irqPin), _rstPin(rstPin),
+      _pn532(irqPin, rstPin),
       _config(nullptr),
       _lastReadTime(0) {}
 
@@ -51,20 +52,13 @@ String NfcManager::detectTag() {
     uint8_t uid[10];
     uint8_t uidLength;
 
-    uint8_t success = _pn532.readPassiveTargetID(
-        PN532_MIFARE_ISO14443A_106,
-        uid,
-        &uidLength,
-        0
-    );
-
-    if (!success) {
+    if (_pn532.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength)) {
         _lastReadTime = now;
-        return "";
+        return _uidToHex(uid, uidLength);
     }
 
     _lastReadTime = now;
-    return _uidToHex(uid, uidLength);
+    return "";
 }
 
 bool NfcManager::isTagRegistered(const String& uid) {
@@ -85,15 +79,8 @@ void NfcManager::addTagToWhitelist(const String& uid) {
 }
 
 void NfcManager::removeTagFromWhitelist(int index) {
-    if (_config == nullptr) {
-        return;
-    }
-
-    std::vector<String> tags;
-    if (_config->getRegisteredTags(tags)) {
-        if (index >= 0 && index < static_cast<int>(tags.size())) {
-            _config->removeRegisteredTag(tags[index]);
-        }
+    if (_config != nullptr) {
+        _config->removeRegisteredTag(index);
     }
 }
 
@@ -105,15 +92,8 @@ int NfcManager::getWhitelistCount() {
 }
 
 String NfcManager::getWhitelistTag(int index) {
-    if (_config == nullptr) {
-        return "";
-    }
-
-    std::vector<String> tags;
-    if (_config->getRegisteredTags(tags)) {
-        if (index >= 0 && index < static_cast<int>(tags.size())) {
-            return tags[index];
-        }
+    if (_config != nullptr) {
+        return _config->getRegisteredTag(index);
     }
     return "";
 }
