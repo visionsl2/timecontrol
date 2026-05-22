@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeControl - NFC Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: #667eea;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title svg {
+            width: 24px;
+            height: 24px;
+            color: #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #e8e8e8;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+
+        .detected-tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .detected-tag .label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 6px;
+        }
+
+        .detected-tag .uid {
+            font-family: monospace;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .detected-tag .none {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .tag-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .tag-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f8f8f8;
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+
+        .tag-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .tag-item .index {
+            width: 28px;
+            height: 28px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .tag-item .uid {
+            flex: 1;
+            margin-left: 12px;
+            font-family: monospace;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .tag-item .delete-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #ff4757;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease;
+        }
+
+        .tag-item .delete-btn:hover {
+            background: #ff3344;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .action-buttons .btn {
+            flex: 1;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: #2ecc71;
+        }
+
+        .toast.error {
+            background: #e74c3c;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 15px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>TimeControl</h1>
+            <p>NFC Timer Configuration</p>
+        </div>
+
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-page="config">Config</div>
+            <div class="nav-tab" data-page="nfc">NFC</div>
+        </div>
+
+        <!-- Config Page -->
+        <div class="page active" id="page-config">
+            <div class="card">
+                <div class="card-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Settings
+                </div>
+
+                <div class="form-group">
+                    <label>Timeout (minutes)</label>
+                    <input type="number" id="timeout" min="1" max="1440" value="30">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>WiFi SSID</label>
+                        <input type="text" id="wifi_ssid" placeholder="Network name">
+                    </div>
+                    <div class="form-group">
+                        <label>WiFi Password</label>
+                        <input type="password" id="wifi_pass" placeholder="Password">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Notify URL</label>
+                    <input type="text" id="notify_url" placeholder="https://example.com/webhook">
+                </div>
+
+                <button class="btn btn-primary" onclick="saveConfig()">Save Settings</button>
+            </div>
+        </div>
+
+        <!-- NFC Page -->
+        <div class="page" id="page-nfc">
+            <div class="card">
+                <div class="card-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4.34A2 2 0 016.34 3H5a2 2 0 000 4h.34A2 2 0 016.34 9H7a2 2 0 010 4H5a2 2 0 000-4h.34A2 2 0 014.34 11H3a2 2 0 010-4h1.34A2 2 0 003.34 5H5a2 2 0 000-4z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    NFC Management
+                </div>
+
+                <div class="detected-tag">
+                    <div class="label">Detected Tag</div>
+                    <div class="uid" id="detected_uid">
+                        <span class="none">No tag detected</span>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="refreshNfc()">Refresh</button>
+                    <button class="btn btn-secondary" onclick="addCurrentTag()">Add Tag</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Registered Tags
+                </div>
+
+                <div class="tag-list" id="tag_list">
+                    <div class="empty-state">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        </svg>
+                        <p>No tags registered</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Tab navigation
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('page-' + tab.dataset.page).classList.add('active');
+            });
+        });
+
+        // Toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + type;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // Load config
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const data = await response.json();
+                document.getElementById('timeout').value = data.timeout || 30;
+                document.getElementById('wifi_ssid').value = data.wifi_ssid || '';
+                document.getElementById('notify_url').value = data.notify_url || '';
+            } catch (err) {
+                showToast('Failed to load config', 'error');
+            }
+        }
+
+        // Save config
+        async function saveConfig() {
+            const timeout = document.getElementById('timeout').value;
+            const wifi_ssid = document.getElementById('wifi_ssid').value;
+            const wifi_pass = document.getElementById('wifi_pass').value;
+            const notify_url = document.getElementById('notify_url').value;
+
+            try {
+                const formData = new URLSearchParams();
+                if (timeout) formData.append('timeout', timeout);
+                if (wifi_ssid) formData.append('wifi_ssid', wifi_ssid);
+                if (wifi_pass) formData.append('wifi_pass', wifi_pass);
+                if (notify_url) formData.append('notify_url', notify_url);
+
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString()
+                });
+
+                if (response.ok) {
+                    showToast('Settings saved!', 'success');
+                } else {
+                    showToast('Save failed', 'error');
+                }
+            } catch (err) {
+                showToast('Save failed: ' + err.message, 'error');
+            }
+        }
+
+        // Load NFC status
+        async function loadNfc() {
+            try {
+                const response = await fetch('/api/nfc');
+                const data = await response.json();
+
+                // Update detected tag
+                const detectedEl = document.getElementById('detected_uid');
+                if (data.detected) {
+                    detectedEl.innerHTML = '<span>' + data.detected + '</span>';
+                } else {
+                    detectedEl.innerHTML = '<span class="none">No tag detected</span>';
+                }
+
+                // Update tag list
+                const tagListEl = document.getElementById('tag_list');
+                if (data.tags && data.tags.length > 0) {
+                    tagListEl.innerHTML = data.tags.map((tag, i) => `
+                        <div class="tag-item">
+                            <span class="index">${i + 1}</span>
+                            <span class="uid">${tag}</span>
+                            <button class="delete-btn" onclick="removeTag(${i})">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    `).join('');
+                } else {
+                    tagListEl.innerHTML = `
+                        <div class="empty-state">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                            </svg>
+                            <p>No tags registered</p>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                showToast('Failed to load NFC data', 'error');
+            }
+        }
+
+        // Refresh NFC
+        function refreshNfc() {
+            loadNfc();
+        }
+
+        // Add current tag
+        async function addCurrentTag() {
+            try {
+                const response = await fetch('/api/nfc');
+                const data = await response.json();
+
+                if (!data.detected) {
+                    showToast('No tag detected', 'error');
+                    return;
+                }
+
+                const formData = new URLSearchParams();
+                formData.append('uid', data.detected);
+
+                const addResponse = await fetch('/api/nfc/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString()
+                });
+
+                if (addResponse.ok) {
+                    showToast('Tag added!', 'success');
+                    loadNfc();
+                } else {
+                    showToast('Failed to add tag', 'error');
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        // Remove tag
+        async function removeTag(index) {
+            try {
+                const formData = new URLSearchParams();
+                formData.append('index', index);
+
+                const response = await fetch('/api/nfc/remove', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString()
+                });
+
+                if (response.ok) {
+                    showToast('Tag removed!', 'success');
+                    loadNfc();
+                } else {
+                    showToast('Failed to remove tag', 'error');
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        // Initial load
+        loadConfig();
+        loadNfc();
+
+        // Auto-refresh NFC every 2 seconds
+        setInterval(loadNfc, 2000);
+    </script>
+</body>
+</html>
