@@ -1,4 +1,5 @@
 #include "led_controller.h"
+#include "config.h"
 
 LedController::LedController(int pinRed, int pinGreen)
     : _pinRed(pinRed), _pinGreen(pinGreen),
@@ -49,15 +50,13 @@ void LedController::update() {
         _blinkState = !_blinkState;
         _lastBlinkTime = now;
 
-        if (_currentState == BOTH) {
-            // 红绿交替闪烁
-            if (_blinkState) {
-                digitalWrite(_pinRed, HIGH);
-                digitalWrite(_pinGreen, LOW);
-            } else {
-                digitalWrite(_pinRed, LOW);
-                digitalWrite(_pinGreen, HIGH);
-            }
+        // 红绿交替闪烁
+        if (_blinkState) {
+            digitalWrite(_pinRed, HIGH);
+            digitalWrite(_pinGreen, LOW);
+        } else {
+            digitalWrite(_pinRed, LOW);
+            digitalWrite(_pinGreen, HIGH);
         }
     }
 }
