@@ -539,14 +539,14 @@
 
             <h3>接线方案</h3>
             <div class="wiring">
-<span class="comment">// ESP32 → PN532 (I2C)</span>
+<span class="comment">// ESP32 → PN532 (I2C 小板版)</span>
 <span class="comment">───────────────────────────────</span>
 <span class="pin">3.3V</span>       <span class="arrow">→</span> VCC
 <span class="pin">GND</span>        <span class="arrow">→</span> GND
-<span class="pin">GPIO21</span>     <span class="arrow">→</span> SDA
-<span class="pin">GPIO22</span>     <span class="arrow">→</span> SCL
-<span class="pin">GPIO4</span>      <span class="arrow">→</span> IRQ
-<span class="pin">GPIO5</span>      <span class="arrow">→</span> RST
+<span class="pin">GPIO1</span>      <span class="arrow">→</span> SDA
+<span class="pin">GPIO2</span>      <span class="arrow">→</span> SCL
+
+<span class="comment">// 注意：小板版只有4个引脚，无IRQ/RST</span>
 
 <span class="comment">// ESP32 → 指示器件</span>
 <span class="comment">───────────────────────────────</span>
