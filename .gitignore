@@ -1,0 +1,21 @@
+# PlatformIO
+.pio/
+.vscode/
+
+# Arduino
+*.ino.cpp
+
+# Build output
+build/
+out/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
