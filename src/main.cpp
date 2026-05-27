@@ -1,120 +1,95 @@
+/**
+ * NFC模块测试程序
+ *
+ * 功能：测试NFC独立模块的正确性
+ * 1. 初始化串口，输出日志
+ * 2. setup()中读取一次NFC检查标签是否存在
+ * 3. loop()中检测状态变化，有变化则输出
+ * 4. NFC中断事件防抖：延迟50ms读取，再延迟2000ms防止频繁中断
+ */
+
 #include <Arduino.h>
-#include "config.h"
-#include "config_manager.h"
-#include "nfc_manager.h"
-#include "led_controller.h"
-#include "buzzer_controller.h"
-#include "timer_manager.h"
-#include "button_manager.h"
-#include "wifi_manager.h"
-#include "web_server.h"
-#include "state_machine.h"
+#include "nfc_module.h"
 
-// Global instances
-ConfigManager configManager;
-NfcManager nfcManager(PIN_NFC_IRQ, PIN_NFC_RST);
-LedController ledController(PIN_LED_R, PIN_LED_G);
-BuzzerController buzzerController(PIN_BUZZER);
-TimerManager timerManager;
-ButtonManager buttonManager(PIN_BTN);
-WiFiManager wifiManager;
-WebServer webServer;
-StateMachine stateMachine;
+// ==================== 全局变量 ====================
+NfcModule nfc;                      // NFC模块实例
+bool lastNfcState = true;           // 上次NFC状态
+String lastUid = "";                // 上次UID
+bool initialized = false;           // 初始化标志
 
-// Flag to track if we are in config mode
-static bool inConfigMode = false;
+// ==================== NFC回调函数 ====================
+void onNfcEvent(bool present, String uid) {
+    // 可以在这里添加其他处理逻辑
+    Serial.println("[Callback] NFC state changed: " + String(present ? "PRESENT" : "ABSENT") +
+                   ", UID: " + (uid.length() > 0 ? uid : "(none)"));
+}
 
-// Forward declaration
-void enterConfigMode();
-
+// ==================== setup ====================
 void setup() {
+    // 初始化串口
     Serial.begin(115200);
-    delay(100);
+    delay(500);
+    Serial.println();
+    Serial.println("========================================");
+    Serial.println("[Init] NFC Module Test Started");
+    Serial.println("========================================");
 
-    // Initialize ConfigManager first (storage)
-    configManager.begin();
+    // 初始化NFC模块
+    if (!nfc.begin()) {
+        Serial.println("[E] NFC module initialization failed!");
+        return;
+    }
 
-    // Initialize hardware modules
-    ledController.begin();
-    buzzerController.begin();
-    buttonManager.begin();
+    // 设置回调
+    nfc.onEvent(onNfcEvent);
 
-    // Initialize NFC manager
-    nfcManager.begin();
-    nfcManager.setConfig(&configManager);
-
-    // Initialize timer manager
-    timerManager.begin();
-    timerManager.setConfig(&configManager);
-
-    // Initialize State Machine with all dependencies
-    stateMachine.begin(&nfcManager, &ledController, &buzzerController, &timerManager);
-
-    // Initialize WiFi manager
-    wifiManager.begin(&configManager);
-
-    // Check if WiFi is configured
-    String ssid = configManager.getWiFiSsid();
-    if (ssid.length() > 0) {
-        // WiFi is configured, try to connect
-        Serial.println("WiFi configured, connecting to: " + ssid);
-
-        // Wait for WiFi connection (with timeout)
-        unsigned long startAttempt = millis();
-        while (!wifiManager.isConnected() && (millis() - startAttempt < 10000)) {
-            delay(100);
-        }
-
-        if (wifiManager.isConnected()) {
-            Serial.println("WiFi connected: " + wifiManager.getIP());
-            // Not in config mode, normal operation
-            inConfigMode = false;
-        } else {
-            // Connection failed, enter config mode
-            Serial.println("WiFi connection failed, entering config mode");
-            enterConfigMode();
-        }
+    // setup中主动读取一次NFC
+    Serial.println("[Setup] Checking NFC...");
+    String uid = "";
+    if (nfc.readTag(uid)) {
+        Serial.println("[Setup] NFC detected: " + uid);
+        lastUid = uid;
     } else {
-        // No WiFi configured, enter config mode
-        Serial.println("No WiFi configured, entering config mode");
-        enterConfigMode();
+        Serial.println("[Setup] No NFC detected, assuming present");
     }
+
+    lastNfcState = nfc.isPresent();
+    initialized = true;
+
+    Serial.println("[Setup] Initialization complete");
+    Serial.println();
 }
 
-void enterConfigMode() {
-    // Start WiFi in AP mode
-    wifiManager.startConfigMode();
-
-    // Start web server
-    webServer.begin(&configManager, &nfcManager);
-
-    // Enter config state
-    stateMachine.enterConfigMode();
-    inConfigMode = true;
-
-    Serial.println("Config mode started");
-    Serial.print("AP IP: ");
-    Serial.println(wifiManager.getIP());
-}
-
+// ==================== loop ====================
 void loop() {
-    // Check for long button press to enter config mode (only if not already in config)
-    if (!inConfigMode) {
-        if (buttonManager.checkLongPress(BTN_LONG_PRESS_MS)) {
-            Serial.println("Long press detected, entering config mode");
-            enterConfigMode();
+    if (!initialized) return;
+
+    // 处理NFC中断
+    nfc.processInterrupt();
+
+    // 检测状态变化
+    bool currentState = nfc.isPresent();
+    String currentUid = nfc.getLastUid();
+
+    if (currentState != lastNfcState) {
+        // 状态变化，输出日志
+        if (currentState) {
+            Serial.println("[NFC] State changed: PRESENT, UID: " + currentUid);
+        } else {
+            Serial.println("[NFC] State changed: ABSENT");
         }
+        lastNfcState = currentState;
     }
 
-    // Update state machine
-    stateMachine.update();
+    // 每5秒输出当前状态（监控）
+    static unsigned long lastMonitorTime = 0;
+    if (millis() - lastMonitorTime >= 5000) {
+        lastMonitorTime = millis();
+        Serial.print("[Monitor] State: ");
+        Serial.print(currentState ? "PRESENT" : "ABSENT");
+        Serial.print(", UID: ");
+        Serial.println(currentUid.length() > 0 ? currentUid : "(none)");
+    }
 
-    // Update LED controller (handles blinking)
-    ledController.update();
-
-    // Update buzzer controller (handles alarm beeping)
-    buzzerController.update();
-
-    // Small delay to prevent busy-waiting
-    delay(10);
+    delay(50);
 }
