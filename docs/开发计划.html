@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFC时间管控器 - 开发计划 V1.1</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .header .version {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .content {
+            padding: 40px;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .section h2 {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        .feature-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        .feature-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+        .feature-card.completed {
+            border-left-color: #28a745;
+        }
+        .feature-card.completed h3::before {
+            content: "✓ ";
+            color: #28a745;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            margin-left: 10px;
+        }
+        .status.done {
+            background: #28a745;
+            color: white;
+        }
+        .status.pending {
+            background: #ffc107;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #667eea;
+            color: white;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #667eea;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #667eea;
+        }
+        .timeline-item.completed::before {
+            background: #28a745;
+        }
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+        .changelog {
+            background: #fff3cd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .changelog h3 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>NFC时间管控器</h1>
+            <p>基于ESP32-S3的Nintendo Switch使用时间管理系统</p>
+            <div class="version">V1.1</div>
+        </div>
+
+        <div class="content">
+            <!-- 项目概述 -->
+            <div class="section">
+                <h2>项目概述</h2>
+                <p>ESP32-S3 时间管控器，用于管理 Nintendo Switch 游戏机使用时间。核心功能是检测NFC标签，判断Switch是否在盒内，超时报警。</p>
+            </div>
+
+            <!-- 已完成功能 -->
+            <div class="section">
+                <h2>已完成功能 <span class="status done">已完成</span></h2>
+
+                <div class="feature-card completed">
+                    <h3>WiFi配网模块</h3>
+                    <p>完整的WiFi配网功能，支持AP模式和自动重连。</p>
+                    <ul style="margin-top:10px; color:#666;">
+                        <li>上电无WiFi配置时自动进入配网模式</li>
+                        <li>连接失败3次后自动进入配网模式</li>
+                        <li>配网热点: TimeControl (密码: 12345678)</li>
+                        <li>配网页面支持WiFi热点自动扫描</li>
+                        <li>支持手动输入隐藏SSID</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card completed">
+                    <h3>NFC验证功能</h3>
+                    <p>基于UID的NFC标签验证，防止非授权设备使用。</p>
+                    <ul style="margin-top:10px; color:#666;">
+                        <li>NVS中未注册UID时，不做校验</li>
+                        <li>NVS中有注册UID时，验证NFC UID是否匹配</li>
+                        <li>UID匹配: 亮绿灯</li>
+                        <li>UID不匹配或NFC离开: 亮红灯</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card completed">
+                    <h3>NFC离开计时功能</h3>
+                    <p>精确记录Switch离开时长，支持断电续算。</p>
+                    <ul style="margin-top:10px; color:#666;">
+                        <li>NFC离开时开始计时</li>
+                        <li>NFC在位且UID匹配时停止计时</li>
+                        <li>NFC在位但UID不匹配时继续计时</li>
+                        <li>断电后当天可继续累计</li>
+                        <li>跨天自动重置计时器</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card completed">
+                    <h3>超时报警功能</h3>
+                    <p>离开超时后发出紧迫的声光报警。</p>
+                    <ul style="margin-top:10px; color:#666;">
+                        <li>超时阈值: 30分钟</li>
+                        <li>红灯快速闪烁 (200ms间隔)</li>
+                        <li>蜂鸣器急促报警 (滴滴滴-滴滴滴)</li>
+                        <li>正确的NFC UID放回后停止报警</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card completed">
+                    <h3>按键功能</h3>
+                    <p>GPIO0按键支持配网和注册功能。</p>
+                    <ul style="margin-top:10px; color:#666;">
+                        <li>长按3秒: 进入配网模式</li>
+                        <li>短按 + NFC在位: 保存当前NFC UID到NVS</li>
+                        <li>使用中断方式监听，释放时处理</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card completed">
+                    <h3>NTP网络对时</h3>
+                    <p>WiFi连接后自动同步网络时间。</p>
+                    <ul style="margin-top:10px; color:#666;">
+                        <li>使用阿里云NTP服务器</li>
+                        <li>用于跨天判断</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 硬件接线 -->
+            <div class="section">
+                <h2>硬件接线</h2>
+                <table>
+                    <tr>
+                        <th>ESP32引脚</th>
+                        <th>功能</th>
+                        <th>备注</th>
+                    </tr>
+                    <tr>
+                        <td>GPIO1</td>
+                        <td>NFC SDA</td>
+                        <td>I2C数据</td>
+                    </tr>
+                    <tr>
+                        <td>GPIO2</td>
+                        <td>NFC SCL</td>
+                        <td>I2C时钟</td>
+                    </tr>
+                    <tr>
+                        <td>GPIO4</td>
+                        <td>NFC IRQ</td>
+                        <td>中断信号</td>
+                    </tr>
+                    <tr>
+                        <td>GPIO12</td>
+                        <td>LED 红色</td>
+                        <td>串联220Ω电阻</td>
+                    </tr>
+                    <tr>
+                        <td>GPIO13</td>
+                        <td>LED 绿色</td>
+                        <td>串联220Ω电阻</td>
+                    </tr>
+                    <tr>
+                        <td>GPIO14</td>
+                        <td>蜂鸣器</td>
+                        <td>有源5V，低电平触发</td>
+                    </tr>
+                    <tr>
+                        <td>GPIO0</td>
+                        <td>配置按钮</td>
+                        <td>内部上拉，长按3秒触发</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- LED状态 -->
+            <div class="section">
+                <h2>LED状态说明</h2>
+                <table>
+                    <tr>
+                        <th>状态</th>
+                        <th>LED行为</th>
+                    </tr>
+                    <tr>
+                        <td>配网模式</td>
+                        <td>红绿灯交替闪烁 (500ms)</td>
+                    </tr>
+                    <tr>
+                        <td>NFC在位 + UID匹配</td>
+                        <td>绿色常亮</td>
+                    </tr>
+                    <tr>
+                        <td>NFC离开或UID不匹配</td>
+                        <td>红色常亮</td>
+                    </tr>
+                    <tr>
+                        <td>超时报警</td>
+                        <td>红色快速闪烁 (200ms)</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- NVS存储 -->
+            <div class="section">
+                <h2>NVS存储</h2>
+                <table>
+                    <tr>
+                        <th>命名空间</th>
+                        <th>键名</th>
+                        <th>类型</th>
+                        <th>说明</th>
+                    </tr>
+                    <tr>
+                        <td rowspan="2">wifi_cfg</td>
+                        <td>ssid</td>
+                        <td>String</td>
+                        <td>WiFi名称</td>
+                    </tr>
+                    <tr>
+                        <td>pass</td>
+                        <td>String</td>
+                        <td>WiFi密码</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="2">wifi_cfg</td>
+                        <td>nfc_uid</td>
+                        <td>String</td>
+                        <td>注册的NFC UID</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">通过短按按键注册</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="4">timer</td>
+                        <td>absent_duration</td>
+                        <td>ULong</td>
+                        <td>累计离开时长(毫秒)</td>
+                    </tr>
+                    <tr>
+                        <td>absent_start</td>
+                        <td>ULong</td>
+                        <td>本次离开开始时间</td>
+                    </tr>
+                    <tr>
+                        <td>last_day</td>
+                        <td>Int</td>
+                        <td>当天日期编码</td>
+                    </tr>
+                    <tr>
+                        <td>last_millis_day</td>
+                        <td>ULong</td>
+                        <td>millis天数(备用跨天判断)</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 版本更新 -->
+            <div class="section">
+                <h2>版本更新</h2>
+                <div class="changelog">
+                    <h3>V1.1 (2026-05-27)</h3>
+                    <ul>
+                        <li><strong>WiFi配网模块</strong> - 完成基础WiFi连接和配网页面</li>
+                        <li><strong>WiFi扫描</strong> - 配网页面增加自动扫描周围热点功能</li>
+                        <li><strong>NFC验证</strong> - 添加基于UID的NFC标签验证逻辑</li>
+                        <li><strong>离开计时</strong> - 实现NFC离开时长累计和超时报警</li>
+                        <li><strong>按键功能</strong> - 长按3秒配网，短按注册NFC UID</li>
+                        <li><strong>报警优化</strong> - 红灯闪烁 + 急促蜂鸣器报警</li>
+                        <li><strong>跨天重置</strong> - NTP时间 + millis备用双重跨天判断</li>
+                        <li><strong>断电续算</strong> - 计时器状态持久化到NVS</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 项目结构 -->
+            <div class="section">
+                <h2>项目结构</h2>
+                <div class="code-block">
+src/
+├── main.cpp           # 主程序
+├── nfc_module.cpp/h   # NFC模块
+├── led_module.cpp/h   # LED控制模块
+├── buzzer_module.cpp/h # 蜂鸣器模块
+├── wifi_module.cpp/h  # WiFi配网模块
+platformio.ini        # 构建配置
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>NFC时间管控器 V1.1 | 基于ESP32-S3 + PN532 NFC</p>
+        </div>
+    </div>
+</body>
+</html>
