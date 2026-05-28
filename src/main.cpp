@@ -115,6 +115,36 @@ void restoreTimer() {
     absentDuration = timerPrefs.getULong("absent_duration", 0);
     absentStart = timerPrefs.getULong("absent_start", 0);
 
+    // Sanity check: 异常值检测和修复
+    // 检查所有值是否合理
+    // 1. 如果 absenStart 有值，检查是否在合理范围内（应该是过去某个时间点）
+    //    异常情况：absentStart 很小但不是0，说明可能被损坏（读到了高位数据）
+    // 2. 如果累计时长 > TIMEOUT_MS，说明值异常
+    bool corrupt = false;
+
+    // 检查 absentStart 是否异常（非0但很小，可能是高位字节损坏）
+    if (absentStart > 0 && absentStart < 10000) {
+        // absentStart 应该是很久以前的时间（约50天前的值）
+        // 如果 < 10秒，说明absentStart损坏了（应该是 ULONG_MAX - XXXXX）
+        corrupt = true;
+    }
+
+    // 检查累计时长是否异常
+    if (absentDuration > TIMEOUT_MS) {
+        corrupt = true;
+    }
+
+    if (corrupt) {
+        // 检测到异常值（NVS损坏或高位字节丢失），重置计时器
+        absentDuration = 0;
+        absentStart = 0;
+        lastDayCode = 0;
+        timerPrefs.putULong("absent_duration", 0);
+        timerPrefs.putULong("absent_start", 0);
+        timerPrefs.putInt("last_day", 0);
+    }
+
+
     // 检查跨天
     if (isNewDay()) {
         absentDuration = 0;
@@ -354,6 +384,17 @@ void loop() {
         if (currentDuration >= TIMEOUT_MS) {
             isWarning = true;
             handleAlert();
+        }
+
+        // 报警状态：主动读取NFC（移到条件外，每次都尝试）
+        String alertUid = "";
+        if (nfc.readTag(alertUid)) {
+            Serial.print("[AlertCheck] NFC read: ");
+            Serial.println(alertUid);
+            if (registeredUid.length() > 0 && alertUid == registeredUid) {
+                handleNfcPresent();
+                stopAlert();
+            }
         }
     } else {
         // 不应该计时，停止计时

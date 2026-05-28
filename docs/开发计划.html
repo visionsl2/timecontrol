@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFC时间管控器 - 开发计划 V1.1</title>
+    <title>NFC时间管控器 - 开发计划 V1.2</title>
     <style>
         * {
             margin: 0;
@@ -171,7 +171,7 @@
         <div class="header">
             <h1>NFC时间管控器</h1>
             <p>基于ESP32-S3的Nintendo Switch使用时间管理系统</p>
-            <div class="version">V1.1</div>
+            <div class="version">V1.2</div>
         </div>
 
         <div class="content">
@@ -383,6 +383,13 @@
             <div class="section">
                 <h2>版本更新</h2>
                 <div class="changelog">
+                    <h3>V1.2 (2026-05-28)</h3>
+                    <ul>
+                        <li><strong>NVS数据恢复增强</strong> - 添加异常值检测和自动修复，防止重启后计时器显示异常值</li>
+                        <li><strong>计时器Sanity Check</strong> - 检测NVS损坏（absentStart高位字节丢失、absentDuration异常增大）并自动重置</li>
+                    </ul>
+                </div>
+                <div class="changelog">
                     <h3>V1.1 (2026-05-27)</h3>
                     <ul>
                         <li><strong>WiFi配网模块</strong> - 完成基础WiFi连接和配网页面</li>
@@ -413,7 +420,7 @@ platformio.ini        # 构建配置
         </div>
 
         <div class="footer">
-            <p>NFC时间管控器 V1.1 | 基于ESP32-S3 + PN532 NFC</p>
+            <p>NFC时间管控器 V1.2 | 基于ESP32-S3 + PN532 NFC</p>
         </div>
     </div>
 </body>

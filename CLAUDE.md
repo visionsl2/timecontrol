@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ESP32-S3 时间管控器，用于管理Nintendo Switch游戏机使用时间。
 - **核心功能**：检测NFC标签，判断Switch是否在盒内，超时报警
-- **V1.1版本**：WiFi配网 + NFC验证 + 离开计时 + 30分钟超时报警
+- **V1.2版本**：WiFi配网 + NFC验证 + 离开计时 + 30分钟超时报警 + NVS异常检测
 
 ## 开发环境
 
